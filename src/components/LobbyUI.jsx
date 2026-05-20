@@ -1,10 +1,47 @@
 // src/components/LobbyUI.jsx
-// Premium Glassmorphic Space Cockpit Lobby UI for Quantum Chaos
+// Ultra-Premium Quantum Chaos Lobby — Animated Starfield + Glassmorphism
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { initAudio, playBounce, playHit, setMute as setMuteUtil } from '../utils/audio';
 import { requestRewardedAd, loadData, saveData, removeData, BASIC_LAUNCH } from '../utils/crazyGamesSDK';
 import AdOverlay from './AdOverlay';
+
+// Animated canvas background component
+function StarCanvas() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let frame;
+    const stars = Array.from({ length: 200 }, () => ({
+      x: Math.random() * canvas.offsetWidth,
+      y: Math.random() * canvas.offsetHeight,
+      r: Math.random() * 1.3 + 0.2,
+      a: Math.random(),
+      aDir: Math.random() > 0.5 ? 1 : -1,
+      speed: 0.003 + Math.random() * 0.006
+    }));
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(s => {
+        s.a += s.aDir * s.speed;
+        if (s.a > 0.85 || s.a < 0.05) s.aDir *= -1;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(220, 210, 255, ${s.a})`;
+        ctx.fill();
+      });
+      frame = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', resize); };
+  }, []);
+  return <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />;
+}
 
 const SECTOR_COLORS = [
   '#1e1b4b', '#312e81', '#1e1b4b', '#312e81',
@@ -267,21 +304,32 @@ function LobbyUI({ highScore, unlockedLevel, gems, setGems, upgrades, onUpgrade,
     <div style={{
       position: 'absolute', inset: 0, zIndex: 10,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      background: 'radial-gradient(circle at center, #0f0a28 0%, #03030b 100%)',
+      background: 'radial-gradient(ellipse 80% 60% at 50% 10%, #0f0623 0%, #03030b 70%)',
       padding: '30px 20px', overflowY: 'auto'
     }}>
+      <StarCanvas />
       {adRunning && (
         <AdOverlay mode="rewarded" />
       )}
       
       {/* Lobby Header */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 className="neon-title" style={{ fontSize: 'clamp(28px, 6vw, 44px)', marginBottom: '4px' }}>QUANTUM CHAOS</h1>
-        <p style={{ color: '#6366f1', letterSpacing: '3px', fontSize: '10px' }}>PHYSICS VECTOR CORE</p>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px', position: 'relative', zIndex: 2 }}>
+        <div style={{ fontSize: '10px', letterSpacing: '6px', color: '#7c3aed', fontFamily: 'Orbitron, monospace', marginBottom: '10px', textTransform: 'uppercase' }}>⬡ QUANTUM PHYSICS ENGINE ⬡</div>
+        <h1 className="neon-title" style={{ fontSize: 'clamp(30px, 6vw, 48px)', marginBottom: '6px' }}>QUANTUM CHAOS</h1>
+        <p style={{ color: '#7c3aed', letterSpacing: '4px', fontSize: '9px', fontFamily: 'Orbitron, monospace' }}>GRAVITY VECTOR CORE v2.0</p>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {['10 LEVELS', 'PHYSICS AI', 'UPGRADES', 'DAILY SPIN'].map(badge => (
+            <span key={badge} style={{
+              padding: '3px 12px', borderRadius: '20px', fontSize: '8px', letterSpacing: '1.5px',
+              fontFamily: 'Orbitron, monospace', color: '#c4b5fd',
+              background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)'
+            }}>{badge}</span>
+          ))}
+        </div>
       </div>
 
       {/* Stats Quickbar */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center', position: 'relative', zIndex: 2 }}>
         <div className="glass-panel" style={{ padding: '6px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={{ fontSize: '9px', color: '#64748b' }}>HIGH RECORD</span>
           <span style={{ fontFamily: 'Orbitron', fontSize: '18px', color: '#a78bfa' }}>{highScore} pts</span>
@@ -301,7 +349,8 @@ function LobbyUI({ highScore, unlockedLevel, gems, setGems, upgrades, onUpgrade,
 
       {/* Glass Navigation Tabs */}
       <div className="glass-panel" style={{
-        display: 'flex', padding: '6px', gap: '8px', width: '100%', maxWidth: '680px', marginBottom: '22px'
+        display: 'flex', padding: '6px', gap: '8px', width: '100%', maxWidth: '680px', marginBottom: '22px',
+        position: 'relative', zIndex: 2
       }}>
         {['levels', 'upgrades', 'honors', 'wheel'].map((tab) => (
           <button
@@ -322,7 +371,7 @@ function LobbyUI({ highScore, unlockedLevel, gems, setGems, upgrades, onUpgrade,
       </div>
 
       {/* TAB CONTENT */}
-      <div style={{ width: '100%', maxWidth: '680px', flex: 1, minHeight: '340px' }}>
+      <div style={{ width: '100%', maxWidth: '680px', flex: 1, minHeight: '340px', position: 'relative', zIndex: 2 }}>
 
         {/* A. LEVELS TAB */}
         {activeTab === 'levels' && (

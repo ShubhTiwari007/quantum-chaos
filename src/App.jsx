@@ -46,6 +46,20 @@ function App() {
     saveData('qc_gems', gems);
   }, [gems]);
 
+  // GameMonetize SDK global pause/resume hooks
+  useEffect(() => {
+    window.onSDKPause = () => {
+      console.log('[QuantumChaos] SDK Pause - game paused for ad');
+    };
+    window.onSDKResume = () => {
+      console.log('[QuantumChaos] SDK Resume - game resumed after ad');
+    };
+    return () => {
+      window.onSDKPause = null;
+      window.onSDKResume = null;
+    };
+  }, []);
+
   useEffect(() => {
     saveData('qc_upgrades', JSON.stringify(upgrades));
   }, [upgrades]);

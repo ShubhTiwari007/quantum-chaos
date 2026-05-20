@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
-// https://vite.dev/config/
+// Single-file build: all JS + CSS inlined into one index.html
 export default defineConfig({
-  plugins: [react()],
-  base: './', // Ensure relative paths for deployment on CrazyGames
+  plugins: [react(), viteSingleFile()],
 })
