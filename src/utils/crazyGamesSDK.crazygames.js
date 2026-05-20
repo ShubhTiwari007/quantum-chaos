@@ -124,9 +124,28 @@ export function saveData(key, value) {
   } catch (e) {
     console.warn("Storage save failed:", e);
   }
+  if (sdkInstance && sdkInstance.data) {
+    try {
+      sdkInstance.data.setItem(key, value.toString());
+      console.log(`[CrazyGames SDK Data] Synced ${key}`);
+    } catch (e) {
+      console.warn("[CrazyGames SDK Data] Sync failed:", e);
+    }
+  }
 }
 
 export function loadData(key) {
+  if (sdkInstance && sdkInstance.data) {
+    try {
+      const val = sdkInstance.data.getItem(key);
+      if (val !== null) {
+        localStorage.setItem(key, val);
+        return val;
+      }
+    } catch (e) {
+      console.warn("[CrazyGames SDK Data] Load failed:", e);
+    }
+  }
   try {
     return localStorage.getItem(key);
   } catch (e) {
@@ -138,4 +157,9 @@ export function removeData(key) {
   try {
     localStorage.removeItem(key);
   } catch (e) {}
+  if (sdkInstance && sdkInstance.data) {
+    try {
+      sdkInstance.data.removeItem(key);
+    } catch (e) {}
+  }
 }
