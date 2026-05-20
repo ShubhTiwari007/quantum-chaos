@@ -3,6 +3,10 @@
 
 export const BASIC_LAUNCH = false;
 
+export const initSDK = (onMuteChange) => {
+  console.log("[GameMonetize SDK] initSDK() mock called.");
+};
+
 let activeAdCallbacks = null;
 
 export const isSDKPresent = () => {

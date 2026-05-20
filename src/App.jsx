@@ -9,6 +9,7 @@ import GameCanvas from './components/GameCanvas';
 import AdOverlay from './components/AdOverlay';
 import { initAudio, setMute, playLevelUp } from './utils/audio';
 import {
+  initSDK,
   requestMidgameAd,
   signalGameplayStart,
   signalGameplayStop,
@@ -45,6 +46,11 @@ function App() {
   useEffect(() => {
     saveData('qc_gems', gems);
   }, [gems]);
+
+  // Initialize the SDK platform APIs
+  useEffect(() => {
+    initSDK((muted) => setMuteState(muted));
+  }, []);
 
   // GameMonetize SDK global pause/resume hooks
   useEffect(() => {

@@ -1,90 +1,141 @@
 // src/utils/crazyGamesSDK.js
-// GameMonetize SDK Implementation for Quantum Chaos
+// Direct integration layer with official CrazyGames SDK v3.
+import { setMute } from './audio';
+
+let sdkInstance = null;
 
 export const BASIC_LAUNCH = false;
 
-let activeAdCallbacks = null;
+export function initSDK(onMuteChange) {
+  if (window.CrazyGames && window.CrazyGames.SDK) {
+    try {
+      sdkInstance = window.CrazyGames.SDK;
+      sdkInstance.init();
+      console.log("[CrazyGames SDK] Official SDK v3 initialized successfully.");
 
-export const isSDKPresent = () => {
-  return typeof sdk !== 'undefined';
-};
-
-// Request a midgame ad (interstitial)
-export const requestMidgameAd = (callbacks) => {
-  if (typeof sdk !== 'undefined' && sdk.showBanner) {
-    console.log("[GameMonetize SDK] Requesting Midgame Ad...");
-    activeAdCallbacks = {
-      onAdStarted: callbacks.adStarted,
-      onAdFinished: callbacks.adFinished
-    };
-    sdk.showBanner();
-  } else {
-    console.log("[GameMonetize SDK Mock] Skipping midgame ad break.");
-    if (callbacks.adStarted) callbacks.adStarted();
-    if (callbacks.adFinished) callbacks.adFinished();
-  }
-};
-
-// Request a rewarded ad
-export const requestRewardedAd = (callbacks) => {
-  if (typeof sdk !== 'undefined' && sdk.showBanner) {
-    console.log("[GameMonetize SDK] Requesting Rewarded Ad...");
-    activeAdCallbacks = {
-      onAdStarted: callbacks.adStarted,
-      onAdFinished: callbacks.adFinished
-    };
-    sdk.showBanner();
-  } else {
-    console.log("[GameMonetize SDK Mock] Rewarded ad skipped.");
-    if (callbacks.adStarted) callbacks.adStarted();
-    if (callbacks.adFinished) callbacks.adFinished();
-  }
-};
-
-// Hook up global events to communicate with SDK_OPTIONS
-if (typeof window !== 'undefined') {
-  window.sdkCallbacks = {
-    onAdStarted: () => {
-      console.log("[GameMonetize SDK] Ad started. Pausing game.");
-      if (activeAdCallbacks && typeof activeAdCallbacks.onAdStarted === 'function') {
-        activeAdCallbacks.onAdStarted();
+      // Synchronize initial mute state and listen to configuration updates
+      if (sdkInstance.game && typeof sdkInstance.game.addSettingsChangeListener === 'function') {
+        sdkInstance.game.addSettingsChangeListener((newSettings) => {
+          if (newSettings && typeof newSettings.muteAudio !== 'undefined') {
+            console.log(`[CrazyGames SDK] Audio mute setting changed: ${newSettings.muteAudio}`);
+            setMute(newSettings.muteAudio);
+            if (onMuteChange) {
+              onMuteChange(newSettings.muteAudio);
+            }
+          }
+        });
       }
-    },
-    onAdFinished: () => {
-      console.log("[GameMonetize SDK] Ad finished. Resuming game.");
-      if (activeAdCallbacks && typeof activeAdCallbacks.onAdFinished === 'function') {
-        activeAdCallbacks.onAdFinished();
-      }
-      activeAdCallbacks = null;
+    } catch (err) {
+      console.error("[CrazyGames SDK] Failed to initialize official SDK:", err);
     }
-  };
+  } else {
+    console.log("[CrazyGames SDK] SDK script not detected. Running in local standalone/mock mode.");
+  }
 }
 
-export const signalGameplayStart = () => {
-  console.log("[GameMonetize SDK] gameplayStart() signaled.");
-};
-
-export const signalGameplayStop = () => {
-  console.log("[GameMonetize SDK] gameplayStop() signaled.");
-};
-
-export const triggerHappytime = () => {
-  console.log("[GameMonetize SDK] happytime() signaled.");
-};
-
-export const saveData = (key, value) => {
-  try {
-    localStorage.setItem(key, value);
-    console.log(`[GameMonetize SDK] Saved ${key}`);
-  } catch (e) {
-    console.warn(`[GameMonetize SDK] Error saving ${key}:`, e);
+export function requestMidgameAd(callbacks) {
+  if (sdkInstance && sdkInstance.ad && !BASIC_LAUNCH) {
+    console.log("[CrazyGames SDK] Requesting midgame ad...");
+    sdkInstance.ad.requestAd("midgame", {
+      adStarted: () => {
+        setMute(true);
+        if (callbacks && typeof callbacks.adStarted === 'function') callbacks.adStarted();
+      },
+      adFinished: () => {
+        setMute(false);
+        if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
+      },
+      adError: (error) => {
+        console.warn("[CrazyGames SDK] Midgame ad error:", error);
+        setMute(false);
+        if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
+      }
+    });
+  } else {
+    if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
   }
-};
+}
 
-export const loadData = (key) => {
-  return localStorage.getItem(key);
-};
+export function requestRewardedAd(callbacks) {
+  if (sdkInstance && sdkInstance.ad && !BASIC_LAUNCH) {
+    console.log("[CrazyGames SDK] Requesting rewarded ad...");
+    sdkInstance.ad.requestAd("rewarded", {
+      adStarted: () => {
+        setMute(true);
+        if (callbacks && typeof callbacks.adStarted === 'function') callbacks.adStarted();
+      },
+      adFinished: () => {
+        setMute(false);
+        if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
+      },
+      adError: (error) => {
+        console.warn("[CrazyGames SDK] Rewarded ad error:", error);
+        setMute(false);
+        if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
+      }
+    });
+  } else {
+    if (callbacks && typeof callbacks.adFinished === 'function') callbacks.adFinished();
+  }
+}
 
-export const removeData = (key) => {
-  localStorage.removeItem(key);
-};
+export function signalGameplayStart() {
+  if (sdkInstance && sdkInstance.game) {
+    try {
+      sdkInstance.game.gameplayStart();
+      console.log("[CrazyGames SDK] gameplayStart() signaled.");
+    } catch (err) {
+      console.warn("[CrazyGames SDK] Error calling gameplayStart:", err);
+    }
+  } else {
+    console.log("[CrazyGames SDK Mock] gameplayStart() simulated.");
+  }
+}
+
+export function signalGameplayStop() {
+  if (sdkInstance && sdkInstance.game) {
+    try {
+      sdkInstance.game.gameplayStop();
+      console.log("[CrazyGames SDK] gameplayStop() signaled.");
+    } catch (err) {
+      console.warn("[CrazyGames SDK] Error calling gameplayStop:", err);
+    }
+  } else {
+    console.log("[CrazyGames SDK Mock] gameplayStop() simulated.");
+  }
+}
+
+export function triggerHappytime() {
+  if (sdkInstance && sdkInstance.game) {
+    try {
+      sdkInstance.game.happytime();
+      console.log("[CrazyGames SDK] happytime() signaled.");
+    } catch (err) {
+      console.warn("[CrazyGames SDK] Error calling happytime:", err);
+    }
+  } else {
+    console.log("[CrazyGames SDK Mock] happytime() simulated.");
+  }
+}
+
+export function saveData(key, value) {
+  try {
+    localStorage.setItem(key, value.toString());
+  } catch (e) {
+    console.warn("Storage save failed:", e);
+  }
+}
+
+export function loadData(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function removeData(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {}
+}

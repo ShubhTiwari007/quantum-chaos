@@ -4,42 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#03030b" />
-    <meta name="description" content="Quantum Chaos — A premium physics puzzle game. Use gravity wells and trajectory mechanics to guide quantum particles to their targets across 10 challenging levels." />
-    <title>Quantum Chaos — Physics Puzzle Game</title>
-    <script type="text/javascript">
-      window.SDK_OPTIONS = {
-        gameId: "9rm9usnrxykove4qx08ym0xkmjheb65e",
-        onEvent: function(event) {
-          switch (event.name) {
-            case "SDK_GAME_PAUSE":
-              if (typeof window.onSDKPause === 'function') window.onSDKPause();
-              if (window.sdkCallbacks && typeof window.sdkCallbacks.onAdStarted === 'function') {
-                window.sdkCallbacks.onAdStarted();
-              }
-              break;
-            case "SDK_GAME_START":
-              if (typeof window.onSDKResume === 'function') window.onSDKResume();
-              if (window.sdkCallbacks && typeof window.sdkCallbacks.onAdFinished === 'function') {
-                window.sdkCallbacks.onAdFinished();
-              }
-              break;
-            case "SDK_ERROR":
-              if (typeof window.onSDKResume === 'function') window.onSDKResume();
-              if (window.sdkCallbacks && typeof window.sdkCallbacks.onAdFinished === 'function') {
-                window.sdkCallbacks.onAdFinished();
-              }
-              break;
-          }
-        }
-      };
-      (function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = 'https://api.gamemonetize.com/sdk.js';
-        fjs.parentNode.insertBefore(js, fjs);
-      }(document, 'script', 'gamemonetize-sdk'));
-    </script>
+    <title>Quantum Chaos — Physics Mind Game</title>
+    <!-- CrazyGames SDK v3 -->
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
   </head>
   <body>
     <div id="root"></div>
